@@ -106,6 +106,39 @@ app.post('/api/tv/send', auth, (req, res) => {
 });
 
 // ---------- AUTH & 2FA ----------
+
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { name, email, password, referral } = req.body;
+    if (!name || !email || !password) return res.status(400).json({ error: 'All fields required' });
+    
+    const existing = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
+    if (existing) return res.status(400).json({ error: 'Email already exists' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let baseUsername = name.toLowerCase().replace(/\s+/g, '');
+    let username = '@' + baseUsername + '_' + Math.floor(10 + Math.random() * 99);
+    
+    let referredBy = null;
+    if (referral) {
+      const referrer = db.prepare('SELECT id FROM users WHERE referral_code = ?').get(referral);
+      if (referrer) referredBy = referrer.id;
+    }
+    
+    const myReferralCode = 'ZAYN' + Math.floor(1000 + Math.random() * 9000);
+
+    const result = db.prepare('INSERT INTO users (name, email, password_hash, username, referred_by, referral_code) VALUES (?, ?, ?, ?, ?, ?)').run(name, email.toLowerCase(), hashedPassword, username, referredBy, myReferralCode);
+    
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+    const { password_hash, vault_pin, twofa_secret, ...safe } = user;
+    
+    res.json({ token: jwt.sign({ userId: safe.id }, JWT_SECRET), user: safe });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.post('/api/auth/login', async (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(req.body.email.toLowerCase());
   if (!user || !(await bcrypt.compare(req.body.password, user.password_hash))) return res.status(400).json({ error: 'Invalid credentials' });
