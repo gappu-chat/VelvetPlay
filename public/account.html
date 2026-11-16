@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You — VelvetPlay</title>
+  <style>
+    body { background: #0F0F0F; color: #F1F1F1; font-family: 'Roboto', Arial, sans-serif; margin: 0; padding-bottom: 80px; }
+    
+    /* Top Nav */
+    .top-nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: #0F0F0F; z-index: 10; }
+    .logo { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; cursor: pointer; }
+    .logo span { color: #3B82F6; }
+    .nav-icons { display: flex; gap: 16px; align-items: center; }
+    .nav-icon { width: 24px; height: 24px; fill: #F1F1F1; cursor: pointer; }
+
+    /* Profile Header */
+    .profile-header { display: flex; align-items: center; padding: 16px; gap: 16px; }
+    .avatar { width: 80px; height: 80px; border-radius: 50%; background: #3B82F6; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; }
+    .profile-info h2 { margin: 0 0 4px 0; font-size: 22px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+    .profile-info p { margin: 0; font-size: 14px; color: #AAAAAA; }
+    
+    .btn-row { display: flex; gap: 12px; padding: 0 16px 16px 16px; }
+    .btn { flex: 1; padding: 10px; border-radius: 20px; font-size: 14px; font-weight: 500; text-align: center; cursor: pointer; background: #272727; color: #F1F1F1; border: 0; }
+    .btn-primary { background: #3B82F6; color: #fff; }
+
+    /* Sections */
+    .section-title { font-size: 18px; font-weight: bold; padding: 16px; display: flex; align-items: center; justify-content: space-between; margin: 0; }
+    
+    /* Horizontal Scroll (History) */
+    .h-scroll { display: flex; overflow-x: auto; gap: 12px; padding: 0 16px 16px 16px; scrollbar-width: none; }
+    .h-scroll::-webkit-scrollbar { display: none; }
+    .h-card { width: 160px; flex-shrink: 0; cursor: pointer; }
+    .h-card img { width: 100%; aspect-ratio: 16/9; border-radius: 8px; object-fit: cover; }
+    .h-card-title { font-size: 13px; font-weight: 500; margin-top: 6px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* List Items (Library) */
+    .list-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; gap: 16px; }
+    .list-item:active { background: #272727; }
+    .list-icon { width: 24px; height: 24px; fill: #F1F1F1; flex-shrink: 0; }
+    .list-text { flex: 1; font-size: 16px; }
+    .list-subtext { font-size: 12px; color: #AAAAAA; margin-top: 2px; }
+    
+    /* Folder Tabs */
+    .folder-tabs { display: flex; overflow-x: auto; gap: 8px; padding: 0 16px 16px; scrollbar-width: none; }
+    .folder-tabs::-webkit-scrollbar { display: none; }
+    .folder-tab { background: #272727; border: 1px solid transparent; padding: 8px 16px; border-radius: 20px; color: #F1F1F1; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+    .folder-tab.active { background: #fff; color: #0F0F0F; }
+
+    /* Video Grid */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
+    .v-card { cursor: pointer; }
+    .v-card img { width: 100%; aspect-ratio: 16/9; border-radius: 8px; object-fit: cover; }
+    .v-card-title { font-size: 13px; font-weight: 500; margin-top: 6px; }
+    
+    /* Modals (Vault & Folder) */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: #212121; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
+    .modal-content input { width: 100%; padding: 12px; background: #0F0F0F; border: 1px solid #333; border-radius: 8px; color: #fff; margin-bottom: 16px; box-sizing: border-box; font-size: 16px; text-align: center; letter-spacing: 2px; }
+    .modal-content button { width: 100%; padding: 12px; background: #3B82F6; color: #fff; border: 0; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 8px; }
+    .modal-content button.cancel { background: transparent; color: #EF4444; }
+  </style>
+</head>
+<body>
+  <!-- Top Nav -->
+  <div class="top-nav">
+    <div class="logo" onclick="location.href='/'">Velvet<span>Play</span></div>
+    <div class="nav-icons">
+      <svg class="nav-icon" onclick="location.href='/'" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <svg class="nav-icon" onclick="location.href='/settings.html'" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+    </div>
+  </div>
+
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="avatar" id="avatar">Z</div>
+    <div class="profile-info">
+      <h2 id="userName">Loading...</h2>
+      <p id="userHandle">@username • <span id="planBadge">Free User</span></p>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="location.href='/subscription.html'">Get Premium</button>
+    <button class="btn" onclick="shareReferral()">Invite Friends</button>
+  </div>
+
+  <!-- History Section -->
+  <h3 class="section-title">History</h3>
+  <div class="h-scroll" id="historyGrid"></div>
+
+  <!-- Library Section -->
+  <h3 class="section-title">Library</h3>
+  
+  <div class="list-item" onclick="openVault()">
+    <svg class="list-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+    <div class="list-text">Private Locker <div class="list-subtext">Locked Videos</div></div>
+  </div>
+  
+  <div class="list-item" onclick="switchFolder('Saved')">
+    <svg class="list-icon" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+    <div class="list-text">Saved Videos <div class="list-subtext">Your Watch Later</div></div>
+  </div>
+  
+  <div class="folder-tabs" id="folderTabs" style="margin-top: 16px;"></div>
+  <div class="grid" id="libraryVideos"></div>
+
+  <!-- Logout -->
+  <div class="list-item" style="margin-top: 20px; border-top: 1px solid #272727;" onclick="logout()">
+    <svg class="list-icon" style="fill:#EF4444;" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+    <div class="list-text" style="color: #EF4444;">Logout</div>
+  </div>
+
+  <!-- Vault Modal -->
+  <div id="vaultModal" class="modal">
+    <div class="modal-content">
+      <h2 id="vaultTitle" style="color:#fff;">Enter PIN</h2>
+      <p id="vaultSub" style="color:#AAAAAA; font-size:14px; margin-bottom:16px;">Enter 4-digit PIN to unlock Locker</p>
+      <input type="password" id="vaultPinInput" maxlength="4" placeholder="••••" inputmode="numeric" />
+      <p id="vaultError" style="color:#EF4444; display:none; font-size:12px; margin-bottom:10px;"></p>
+      <button onclick="submitVaultPin()">Unlock</button>
+      <button class="cancel" onclick="document.getElementById('vaultModal').style.display='none'">Cancel</button>
+    </div>
+  </div>
+
+  <!-- New Folder Modal -->
+  <div id="createFolderModal" class="modal">
+    <div class="modal-content">
+      <h2 style="color:#fff;">New Folder</h2>
+      <input type="text" id="newFolderName" placeholder="Folder name" style="font-size:16px; letter-spacing:normal; text-align:left;" />
+      <button onclick="createFolder()">Create</button>
+      <button class="cancel" onclick="document.getElementById('createFolderModal').style.display='none'">Cancel</button>
+    </div>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script>
+    if (!Auth.requireLogin()) throw new Error();
+    let isVaultUnlocked = false, hasVaultPin = false, currentFolder = 'Saved', allLibraryItems = [];
+
+    // Load Profile
+    Auth.authFetch('/api/auth/me').then(r => r.json()).then(u => {
+      document.getElementById('userName').textContent = u.name;
+      document.getElementById('avatar').textContent = u.name.charAt(0).toUpperCase();
+      document.getElementById('userHandle').innerHTML = `@${u.username || u.name.toLowerCase()} • <span id="planBadge">${u.sub_expiry && new Date(u.sub_expiry) > new Date() ? 'Premium' : 'Free User'}</span>`;
+      hasVaultPin = u.vault_enabled;
+    });
+
+    // Load History
+    Auth.authFetch('/api/history/all').then(r => r.json()).then(items => {
+      const grid = document.getElementById('historyGrid');
+      if (!items.length) { grid.innerHTML = `<p style="color:#AAAAAA; font-size:14px;">No history yet.</p>`; return; }
+      grid.innerHTML = items.slice(0,10).map(v => `
+        <div class="h-card" onclick="playVideo('${v.id}')">
+          <img src="${v.thumbnail}" loading="lazy"/>
+          <div class="h-card-title">${v.title}</div>
+        </div>`).join('');
+    });
+
+    // Library Logic
+    async function loadLibrary() {
+      const r = await Auth.authFetch('/api/library');
+      allLibraryItems = await r.json();
+      renderLibrary();
+      loadFolders();
+    }
+
+    async function loadFolders() {
+      const res = await Auth.authFetch('/api/user/folders');
+      const folders = await res.json();
+      document.getElementById('folderTabs').innerHTML = folders.map(f => {
+        let isLocked = (f === 'Vault' && !isVaultUnlocked);
+        if(f === 'Vault') return ''; // Vault handled by list item above
+        return `<div class="folder-tab ${f === currentFolder ? 'active' : ''}" onclick="switchFolder('${f}')">${isLocked ? '🔒' : '📁'} ${f}</div>`;
+      }).join('') + `<div class="folder-tab" onclick="document.getElementById('createFolderModal').style.display='flex'">+ New</div>`;
+    }
+
+    function renderLibrary() {
+      const grid = document.getElementById('libraryVideos');
+      let filtered = allLibraryItems.filter(i => i.folder_name === currentFolder);
+      if (currentFolder !== 'Vault') filtered = filtered.filter(i => i.folder_name !== 'Vault');
+      
+      if (!filtered.length) { grid.innerHTML = `<p style="color:#AAAAAA; grid-column:1/-1; font-size:14px;">No videos in this folder.</p>`; return; }
+      
+      grid.innerHTML = filtered.map(item => `
+        <div class="v-card" onclick="playVideo('${item.video_id}')">
+          <div style="position:relative"><img src="${item.thumbnail}" loading="lazy"/></div>
+          <div class="v-card-title">${item.title}</div>
+        </div>`).join('');
+    }
+
+    function switchFolder(folder) {
+      if (folder === 'Vault' && !isVaultUnlocked) return openVault();
+      currentFolder = folder; loadFolders(); renderLibrary();
+      document.getElementById('libraryVideos').scrollIntoView({behavior: 'smooth'});
+    }
+
+    // Vault Logic
+    function openVault() {
+      if (isVaultUnlocked) { currentFolder = 'Vault'; loadFolders(); renderLibrary(); return; }
+      const modal = document.getElementById('vaultModal');
+      document.getElementById('vaultTitle').innerText = hasVaultPin ? "Unlock Locker" : "Setup PIN";
+      document.getElementById('vaultPinInput').value = '';
+      document.getElementById('vaultError').style.display = 'none';
+      modal.style.display = 'flex';
+      setTimeout(() => document.getElementById('vaultPinInput').focus(), 100);
+    }
+
+    async function submitVaultPin() {
+      const pin = document.getElementById('vaultPinInput').value;
+      if (pin.length !== 4) return alert('PIN must be 4 digits');
+      
+      if (!hasVaultPin) {
+        await Auth.authFetch('/api/user/vault-pin', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin}) });
+        hasVaultPin = true; isVaultUnlocked = true;
+        document.getElementById('vaultModal').style.display = 'none';
+        switchFolder('Vault');
+      } else {
+        const res = await Auth.authFetch('/api/user/verify-pin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pin}) });
+        const data = await res.json();
+        if (data.success) {
+          isVaultUnlocked = true;
+          document.getElementById('vaultModal').style.display = 'none';
+          switchFolder('Vault');
+        } else {
+          document.getElementById('vaultPinInput').value = '';
+          document.getElementById('vaultError').innerText = "❌ Wrong PIN"; document.getElementById('vaultError').style.display = 'block';
+        }
+      }
+    }
+
+    async function createFolder() {
+      const name = document.getElementById('newFolderName').value.trim();
+      if (!name) return;
+      await Auth.authFetch('/api/user/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder_name: name }) });
+      document.getElementById('createFolderModal').style.display = 'none';
+      document.getElementById('newFolderName').value = '';
+      loadFolders();
+    }
+
+    async function playVideo(videoId) {
+      const res = await Auth.authFetch('/api/create-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ videoId }) });
+      const order = await res.json();
+      if (order.hasAccess && order.token) location.href = `/player.html?video=${videoId}&token=${order.token}`;
+      else location.href = '/subscription.html';
+    }
+
+    function shareReferral() {
+      Auth.authFetch('/api/referral/info').then(r => r.json()).then(d => {
+        const text = `Join VelvetPlay using my code ${d.code} and get 7 days Free Premium! ${window.location.origin}`;
+        if (navigator.share) navigator.share({ title: 'Invite Friends', text: text });
+        else { navigator.clipboard.writeText(text); alert('Referral link copied!'); }
+      });
+    }
+
+    function logout() { Auth.clearToken(); location.href = '/'; }
+    loadLibrary();
+  </script>
+</body>
+</html>
+<script>
+// Account page ke liye Downloads load karne ka function
+async function loadMyDownloads() {
+  const token = Auth.getToken();
+  if (!token) return;
+  
+  try {
+    const res = await fetch('/api/user/downloads', { headers: { 'Authorization': 'Bearer ' + token } });
+    const downloads = await res.json();
+    
+    // Agar downloads ka koi container nahi hai, toh Library ke upar ek naya bana do
+    let container = document.getElementById('myDownloadsSection');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'myDownloadsSection';
+      container.style.marginTop = '30px';
+      
+      // HTML set karo
+      container.innerHTML = `
+        <h3 style="font-size: 18px; margin-bottom: 15px; color: white;">Downloads</h3>
+        <div id="downloadGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px;"></div>
+      `;
+      
+      // Jahan Library likha hai, uske theek upar add karo
+      const libraryHeading = Array.from(document.querySelectorAll('h2, h3')).find(el => el.innerText.trim() === 'Library');
+      if (libraryHeading) {
+        libraryHeading.parentNode.insertBefore(container, libraryHeading);
+      } else {
+        document.body.appendChild(container);
+      }
+    }
+
+    const grid = document.getElementById('downloadGrid');
+    if (downloads.length === 0) {
+      grid.innerHTML = '<p style="color: #888; font-size: 14px;">No downloads yet. Go watch a video and click Save!</p>';
+      return;
+    }
+
+    grid.innerHTML = downloads.map(v => `
+      <div style="cursor: pointer;" onclick="location.href='/player.html?id=${v.id}'">
+        <img src="${v.thumbnail}" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; margin-bottom: 8px;">
+        <div style="font-size: 14px; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${v.title}</div>
+        <div style="font-size: 12px; color: #888;">${v.views} views</div>
+      </div>
+    `).join('');
+
+  } catch(e) { console.error(e); }
+}
+
+// Page load hone par call karo
+setTimeout(loadMyDownloads, 500); // Thoda wait karke, taaki Auth load ho jaye
+</script>

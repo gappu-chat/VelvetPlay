@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VelvetPlay TV</title>
+  <style>
+    body { background: #0F0F0F; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
+    .logo { font-size: 40px; font-weight: 900; margin-bottom: 40px; }
+    .logo span { color: #3B82F6; }
+    .code-box { background: #212121; padding: 40px 80px; border-radius: 20px; border: 2px solid #3B82F6; margin-bottom: 20px; }
+    .code { font-size: 80px; font-weight: bold; letter-spacing: 10px; color: #3B82F6; }
+    .instruction { font-size: 20px; color: #AAAAAA; max-width: 600px; line-height: 1.5; }
+    #status { margin-top: 30px; font-size: 24px; color: #10B981; font-weight: bold; display: none; }
+  </style>
+</head>
+<body>
+  <div class="logo">Velvet<span>Play</span></div>
+  <div class="code-box"><div class="code" id="tvCode">----</div></div>
+  <div class="instruction">Apne phone par VelvetPlay app kholiye.<br/>Settings > Connect to TV par jayein aur yeh code daalein.</div>
+  <div id="status">✅ Connected! Ab phone se video play karein...</div>
+
+  <script>
+    let currentCode = '';
+    
+    async function init() {
+      const res = await fetch('/api/tv/create', { method: 'POST' });
+      const data = await res.json();
+      currentCode = data.code;
+      document.getElementById('tvCode').innerText = currentCode;
+      poll();
+    }
+
+    async function poll() {
+      if(!currentCode) return;
+      try {
+        const res = await fetch('/api/tv/poll/' + currentCode);
+        if(res.ok) {
+          const data = await res.json();
+          if(data.video_id && data.token) {
+            document.getElementById('status').style.display = 'block';
+            location.href = `/player.html?video=${data.video_id}&token=${data.token}&tv=true`;
+            return; // Stop polling
+          }
+        }
+      } catch(e) {}
+      setTimeout(poll, 2000); // Poll every 2 seconds
+    }
+    
+    init();
+  </script>
+</body>
+</html>

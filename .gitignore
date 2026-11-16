@@ -1,0 +1,10 @@
+node_modules/
+media/
+temp_uploads/
+downloads/
+videos.db
+*.db
+*.mp4
+*.jpg
+.env
+.DS_Store

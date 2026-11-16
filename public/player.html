@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>Playing — VelvetPlay</title>
+  <style>
+    body { background: #0F0F0F; color: #F1F1F1; font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 40px; }
+    .video-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; display: flex; align-items: center; justify-content: center; }
+    video { width: 100%; height: 100%; }
+    .spinner { position: absolute; width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #FF0000; border-radius: 50%; animation: spin 1s linear infinite; z-index: 10; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* TV Remote Overlay */
+    #tvRemote { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #151B2B; text-align: center; padding: 20px; }
+    #tvRemote h2 { color: #10B981; margin-bottom: 10px; }
+    #tvRemote p { color: #9CA3AF; margin-bottom: 20px; }
+    
+    .video-details { padding: 12px 16px; }
+    .video-title { font-size: 18px; font-weight: 700; line-height: 1.3; margin-bottom: 6px; }
+    .video-meta { font-size: 12px; color: #AAAAAA; margin-bottom: 16px; }
+    .yt-actions { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 20px; scrollbar-width: none; }
+    .yt-actions::-webkit-scrollbar { display: none; }
+    .action-pill { display: flex; background: #272727; border-radius: 20px; align-items: center; flex-shrink: 0; }
+    .action-pill button { display: flex; align-items: center; gap: 6px; background: transparent; border: 0; color: #fff; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; }
+    .action-pill button:active { background: #3f3f3f; border-radius: 20px; }
+    .pill-divider { width: 1px; height: 24px; background: #3f3f3f; }
+    .action-btn { display: flex; align-items: center; gap: 6px; background: #272727; color: #fff; border: 0; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; flex-shrink: 0; }
+    .action-btn:active { background: #3f3f3f; }
+    .action-pill button.like-active svg { fill: #fff; }
+    .comment-trigger { background: #212121; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 20px; }
+    .comment-trigger .yt-avatar { width: 32px; height: 32px; font-size: 14px; }
+    .comment-trigger span { color: #AAAAAA; font-size: 14px; flex: 1; border-bottom: 1px solid #333; padding-bottom: 4px; }
+    .comment-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; }
+    .comment-sheet { position: fixed; bottom: 0; left: 0; right: 0; height: 75vh; background: #0F0F0F; border-radius: 16px 16px 0 0; z-index: 1001; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.3s ease-out; }
+    .comment-sheet.open { transform: translateY(0); }
+    .sheet-header { padding: 16px; border-bottom: 1px solid #272727; display: flex; justify-content: space-between; align-items: center; }
+    .sheet-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+    .close-sheet { background: transparent; border: 0; color: #fff; font-size: 24px; cursor: pointer; }
+    .comment-list { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 20px; }
+    .comment-item { display: flex; gap: 12px; align-items: flex-start; }
+    .yt-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #3B82F6, #8B5CF6); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; color: #fff; flex-shrink: 0; }
+    .comment-content { flex: 1; }
+    .comment-content h4 { font-size: 12px; color: #AAAAAA; margin-bottom: 4px; font-weight: 400; }
+    .comment-content h4 b { color: #F1F1F1; font-weight: 600; cursor: pointer; }
+    .comment-content p { font-size: 14px; color: #F1F1F1; line-height: 1.4; margin: 0 0 8px 0; }
+    .comment-actions { display: flex; gap: 16px; color: #AAAAAA; font-size: 12px; align-items: center; }
+    .comment-actions button { background: transparent; border: 0; color: #AAAAAA; display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 12px; padding: 0; }
+    .comment-actions button:hover { color: #fff; }
+    .comment-actions svg { width: 14px; height: 14px; }
+    .reply-item { margin-left: 48px; margin-top: 16px; border-left: 2px solid #272727; padding-left: 12px; }
+    .comment-input-row { padding: 12px 16px; background: #0F0F0F; border-top: 1px solid #272727; display: flex; gap: 12px; align-items: flex-end; }
+    .comment-textarea { flex: 1; background: #212121; border: 1px solid #333; border-radius: 20px; color: #fff; padding: 10px 16px; font-size: 14px; outline: none; resize: none; font-family: inherit; }
+    .btn-post { background: #3B82F6; color: #fff; border: 0; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; opacity: 0.5; pointer-events: none; }
+    .btn-post.active { opacity: 1; pointer-events: auto; }
+    .more-videos-section { padding: 0 16px; }
+    .video-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 12px; }
+    .yt-card { display: flex; gap: 12px; cursor: pointer; }
+    .yt-card-thumb { width: 160px; aspect-ratio: 16/9; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    .yt-card-title { font-size: 14px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <div style="padding: 12px 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #272727; position: sticky; top: 0; background: #0F0F0F; z-index: 100;">
+    <button onclick="location.href='/'" style="background: transparent; border: 0; color: #fff; font-size: 24px; cursor: pointer; padding: 0;">←</button>
+    <span style="font-weight: 700; font-size: 16px;">Now Playing</span>
+  </div>
+
+  <div class="video-wrap">
+    <div class="spinner" id="videoSpinner"></div>
+    <video id="player" controls playsinline autoplay></video>
+    
+    <!-- TV REMOTE MODE -->
+    <div id="tvRemote">
+      <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path><line x1="2" y1="20" x2="2.01" y2="20"></line></svg>
+      <h2 style="margin-top: 20px;">Playing on TV</h2>
+      <p>Aapka video TV par chal raha hai.</p>
+      <button onclick="disconnectTV()" style="background:#EF4444; color:#fff; border:0; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px;">Disconnect TV</button>
+    </div>
+  </div>
+
+  <div class="video-details">
+    <div class="video-title" id="vtitle">Loading...</div>
+    <div class="video-meta" id="vmeta">0 views • Just now</div>
+
+    <div class="yt-actions">
+      <div class="action-pill">
+        <button id="likeBtn" onclick="reactVideo('like')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+          <span id="likeCount">0</span>
+        </button>
+        <div class="pill-divider"></div>
+        <button id="dislikeBtn" onclick="reactVideo('dislike')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>
+        </button>
+      </div>
+
+      <button class="action-btn" onclick="shareVideo()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg> Share</button>
+      <button class="action-btn" onclick="openSaveModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg> Save</button>
+      <button class="action-btn" onclick="downloadCurrentVideo()" id="dlBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download
+      </button>
+      
+      </button>
+    </div>
+
+    <div class="comment-trigger" onclick="openComments()">
+      <div class="yt-avatar" id="userAvatar">Z</div>
+      <span>Add a comment...</span>
+    </div>
+  </div>
+
+  <div class="comment-sheet-overlay" id="sheetOverlay" onclick="closeComments()"></div>
+  <div class="comment-sheet" id="commentSheet">
+    <div class="sheet-header"><h3>Comments <span id="commentCount" style="color:#AAAAAA; font-size:14px; font-weight:400;">0</span></h3><button class="close-sheet" onclick="closeComments()">✕</button></div>
+    <div class="comment-list" id="commentsList"></div>
+    <div class="comment-input-row">
+      <div class="yt-avatar" id="userAvatarSheet" style="width:32px; height:32px; font-size:14px;">Z</div>
+      <textarea class="comment-textarea" id="commentText" rows="1" placeholder="Add a comment..." oninput="togglePostBtn()"></textarea>
+      <button class="btn-post" id="postBtn" onclick="postComment()">Comment</button>
+    </div>
+  </div>
+
+  <div class="more-videos-section">
+    <div class="video-title" style="margin-bottom:12px; margin-top:20px; font-size:16px;">Related Videos</div>
+    <div class="video-grid" id="related"></div>
+  </div>
+
+  <div id="saveModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:2000; display:none; align-items:center; justify-content:center;">
+    <div style="background:#212121; padding:24px; border-radius:16px; width:90%; max-width:400px; text-align:center;">
+      <h2 style="color:#fff; margin-bottom:16px;">Save to Library</h2>
+      <div id="folderList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+      <input type="text" id="customFolderName" placeholder="Or create new folder..." style="width:100%; padding:12px; background:#0F0F0F; border:1px solid #333; border-radius:8px; color:#fff; margin-bottom:16px; box-sizing:border-box;" />
+      <button onclick="saveVideoWithFolder()" style="width:100%; padding:12px; background:#3B82F6; color:#fff; border:0; border-radius:8px; font-weight:bold; margin-bottom:8px; cursor:pointer;">Save Video</button>
+      <button onclick="document.getElementById('saveModal').style.display='none'" style="width:100%; padding:12px; background:transparent; color:#EF4444; border:0; cursor:pointer; font-weight:bold;">Cancel</button>
+    </div>
+  </div>
+
+  <script src="/auth.js"></script>
+
+
+<style>
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .spin-anim { animation: spin 1s linear infinite; }
+</style>
+
+
+
+
+
+<script>
+function getVideoId() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get("id") || urlParams.get("video") || urlParams.get("v");
+}
+
+async function checkDownloadStatus() {
+  const token = Auth.getToken();
+  const videoId = getVideoId();
+  const btn = document.getElementById('dlBtn');
+  if (!token || !videoId || !btn) return;
+
+  try {
+    const res = await fetch('/api/user/downloads', { headers: { 'Authorization': 'Bearer ' + token } });
+    const downloads = await res.json();
+    const isSaved = downloads.some(d => d.id === videoId);
+    
+    if (isSaved) {
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> <span style="color:#10b981; font-weight:bold;">Saved</span>';
+    } else {
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download';
+    }
+  } catch(e) {}
+}
+
+async function downloadCurrentVideo() {
+  const token = Auth.getToken();
+  if (!token) { alert("Login karein!"); window.location.href = "/login.html"; return; }
+  const videoId = getVideoId();
+  const btn = document.getElementById('dlBtn');
+  if (!videoId || !btn) return;
+
+  const isSaved = btn.innerText.includes('Saved');
+  
+  if (isSaved) {
+    if(!confirm("Remove from downloads?")) return;
+    btn.innerHTML = '<svg class="spin-anim" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Removing...';
+    try {
+      const res = await fetch(`/api/user/downloads/${videoId}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+      if(res.ok) checkDownloadStatus();
+    } catch(e) { alert("Error!"); checkDownloadStatus(); }
+  } else {
+    btn.innerHTML = '<svg class="spin-anim" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Saving...';
+    try {
+      const res = await fetch('/api/download/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ videoId })
+      });
+      if(res.ok) checkDownloadStatus();
+    } catch(e) { alert("Error!"); checkDownloadStatus(); }
+  }
+}
+
+document.addEventListener("DOMContentLoaded", checkDownloadStatus);
+</script>
+
+
+<script>
+// Original Player Logic
+let token = Auth.getToken();
+const urlParams = new URLSearchParams(window.location.search);
+let videoId = urlParams.get("id") || urlParams.get("video") || urlParams.get("v");
+
+if (videoId) {
+  fetch('/api/video/' + videoId).then(r => r.json()).then(video => {
+    if(!video || video.error) return;
+    if(document.getElementById('vtitle')) document.getElementById('vtitle').innerText = video.title || 'Untitled';
+    if(document.getElementById('vviews')) document.getElementById('vviews').innerText = `${video.views || 0} views`;
+    
+    // Video player load karo
+    if (token) {
+      fetch('/api/create-order', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ videoId: video.id })
+      }).then(res => res.json()).then(data => {
+        if (data.hasAccess) {
+          const v = document.querySelector('video');
+          if(v) { v.src = `/api/stream/${video.id}?token=${data.token}`; v.load(); }
+        }
+      });
+    }
+  });
+
+  // Related Videos load karo
+  fetch('/api/videos').then(r => r.json()).then(data => {
+    if(!data.videos) return;
+    let others = data.videos.filter(v => v.id !== videoId).sort(() => 0.5 - Math.random()).slice(0, 4);
+    let relatedDiv = document.getElementById('related');
+    if(relatedDiv) {
+      relatedDiv.innerHTML = others.map(v => `<div class="yt-card" onclick="location.href='/player.html?video=${v.id}'"><img class="yt-card-thumb" src="${v.thumbnail}" loading="lazy"/><div class="yt-card-info"><div class="yt-card-title">${v.title || 'Untitled'}</div><div style="font-size:12px; color:#AAAAAA;">${v.views || 0} views</div></div></div>`).join('');
+    }
+  });
+}
+</script>
+
+<style>
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .spin-anim { animation: spin 1s linear infinite; }
+</style>
+<script>
+function getVideoId() { return new URLSearchParams(window.location.search).get("id") || new URLSearchParams(window.location.search).get("video") || new URLSearchParams(window.location.search).get("v"); }
+async function checkDownloadStatus() {
+  const token = Auth.getToken(); const videoId = getVideoId(); const btn = document.getElementById('dlBtn');
+  if (!token || !videoId || !btn) return;
+  try {
+    const res = await fetch('/api/user/downloads', { headers: { 'Authorization': 'Bearer ' + token } });
+    const downloads = await res.json();
+    const isSaved = downloads.some(d => d.id === videoId);
+    if (isSaved) { btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> <span style="color:#10b981; font-weight:bold;">Saved</span>'; }
+    else { btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download'; }
+  } catch(e) {}
+}
+async function downloadCurrentVideo() {
+  const token = Auth.getToken(); if (!token) { alert("Login karein!"); window.location.href = "/login.html"; return; }
+  const videoId = getVideoId(); const btn = document.getElementById('dlBtn'); if (!videoId || !btn) return;
+  const isSaved = btn.innerText.includes('Saved');
+  if (isSaved) {
+    if(!confirm("Remove from downloads?")) return;
+    btn.innerHTML = '<svg class="spin-anim" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Removing...';
+    try { const res = await fetch(`/api/user/downloads/${videoId}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } }); if(res.ok) checkDownloadStatus(); } catch(e) { alert("Error!"); checkDownloadStatus(); }
+  } else {
+    btn.innerHTML = '<svg class="spin-anim" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Saving...';
+    try { const res = await fetch('/api/download/save', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ videoId }) }); if(res.ok) checkDownloadStatus(); } catch(e) { alert("Error!"); checkDownloadStatus(); }
+  }
+}
+document.addEventListener("DOMContentLoaded", checkDownloadStatus);
+</script>
+
+</body>
+</html>
+
+

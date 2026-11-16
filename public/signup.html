@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up — VelvetPlay</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <div class="auth-logo">Velvet<span>Play</span></div>
+    <h2>Create Account</h2>
+    <p class="auth-sub">Get 7 Days Free Premium with a Referral Code!</p>
+
+    <form id="signupForm">
+      <label>Naam</label>
+      <input type="text" id="name" placeholder="Aapka naam" required />
+      <label>Email</label>
+      <input type="email" id="email" placeholder="you@email.com" required />
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Kam se kam 6 characters" required minlength="6" />
+      
+      <!-- Referral Input -->
+      <label>Referral Code (Optional)</label>
+      <input type="text" id="refCode" placeholder="e.g. ZAYN1234" style="text-transform: uppercase;" />
+      
+      <button type="submit" id="submitBtn">Sign Up</button>
+    </form>
+
+    <p id="error" class="auth-error"></p>
+
+    <p class="auth-footer">
+      Pehle se account hai? <a href="/login.html">Login karo</a>
+    </p>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script>
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const err = document.getElementById('error');
+      err.textContent = '';
+      btn.disabled = true; btn.textContent = 'Creating...';
+
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('name').value,
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value,
+          refCode: document.getElementById('refCode').value
+        })
+      });
+      const data = await res.json();
+      btn.disabled = false; btn.textContent = 'Sign Up';
+
+      if (!res.ok) { err.textContent = data.error || 'Signup fail'; return; }
+      Auth.setToken(data.token);
+      Auth.setUser(data.user);
+      location.href = '/';
+    });
+  </script>
+</body>
+</html>

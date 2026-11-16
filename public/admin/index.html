@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body { background: #0B0F19; color: #fff; padding: 20px; }
+    .container { max-width: 600px; margin: auto; }
+    .card { background: #151B2B; padding: 20px; border-radius: 16px; border: 1px solid #2A3441; margin-bottom: 20px; }
+    h2 { color: #3B82F6; text-align: center; margin-bottom: 20px; }
+    h3 { margin-bottom: 16px; color: #F3F4F6; border-bottom: 1px solid #2A3441; padding-bottom: 8px; }
+    label { display: block; font-size: 12px; color: #9CA3AF; margin: 12px 0 6px; }
+    input, select { width: 100%; padding: 12px; background: #1F2937; border: 1px solid #2A3441; border-radius: 8px; color: #fff; box-sizing: border-box; margin-bottom: 8px; }
+    button { padding: 12px; background: #3B82F6; color: #fff; border: 0; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 12px; }
+    .btn-small { width: auto; padding: 6px 12px; margin: 0; font-size: 12px; border-radius: 6px; }
+    .btn-danger { background: #EF4444; }
+    .btn-success { background: #10B981; }
+    .hidden { display: none !important; }
+    .req-item { background: #1F2937; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+    
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .stat-box { background: #1F2937; padding: 15px; border-radius: 10px; text-align: center; }
+    .stat-box h4 { color: #9CA3AF; font-size: 12px; margin-bottom: 5px; }
+    .stat-box p { font-size: 20px; font-weight: bold; color: #10B981; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loginScreen" class="card">
+      <h2>Admin Login</h2>
+      <input type="password" id="adminPass" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </div>
+
+    <div id="dashboardScreen" class="hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+        <h2 style="margin:0;">Admin Panel</h2>
+        <button class="btn-small btn-danger" onclick="logout()">Logout</button>
+      </div>
+
+      <!-- Analytics -->
+      <div class="card" style="border-color: #10B981;">
+        <h3 style="color: #10B981;">📊 Analytics</h3>
+        <div class="analytics-grid">
+          <div class="stat-box"><h4>Total Users</h4><p id="statUsers">0</p></div>
+          <div class="stat-box"><h4>Premium Members</h4><p id="statPremium" style="color:#F59E0B;">0</p></div>
+          <div class="stat-box"><h4>Total Revenue</h4><p id="statRevenue" style="color:#3B82F6;">₹0</p></div>
+          <div class="stat-box"><h4>Total Videos</h4><p id="statVideos">0</p></div>
+        </div>
+      </div>
+
+      <div class="card" style="border-color: #F59E0B;">
+        <h3 style="color: #F59E0B;">🔔 Pending Payments</h3>
+        <div id="pendingPayments">No pending requests.</div>
+      </div>
+
+      <div class="card">
+        <h3>UPI Settings</h3>
+        <input type="text" id="upi_id" placeholder="UPI ID" />
+        <input type="text" id="upi_name" placeholder="UPI Name" />
+        <button onclick="saveUPI()" style="background:#10B981;">Save UPI</button>
+      </div>
+
+      <div class="card">
+        <h3>Update Home Banner</h3>
+        <input type="text" id="banner_title" placeholder="Banner Title" />
+        <input type="text" id="banner_desc" placeholder="Banner Description" />
+        <input type="text" id="banner_image" placeholder="Image URL (16:9)" />
+        <select id="banner_video_id"><option value="">-- Loading --</option></select>
+        <button onclick="saveBanner()" style="background:#10B981;">Update Banner</button>
+      </div>
+
+      <div class="card">
+        <h3>Upload New Video</h3>
+        <input type="text" id="title" placeholder="Video Title" />
+        <input type="text" id="tags" placeholder="Tags (e.g. action, comedy, actor name)" />
+        <select id="category"><option value="Trending">Trending</option><option value="New">New</option><option value="Premium">Premium</option></select>
+        <select id="isFree"><option value="false">Premium</option><option value="true">Free</option></select>
+        <label>Thumbnail</label><input type="file" id="thumbnail" accept="image/*" />
+        <label>Video (MP4)</label><input type="file" id="video" accept="video/mp4" />
+        <button onclick="uploadVideo()" id="uploadBtn">Upload Video</button>
+        <p id="uploadMsg" style="text-align:center; margin-top:12px; color:#10B981;"></p>
+      </div>
+
+      <div class="card">
+        <h3>Manage Videos</h3>
+        <div id="videoList">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('adminToken');
+    if (token) showDashboard();
+    function getHeaders() { return { 'Authorization': 'Bearer ' + localStorage.getItem('adminToken') }; }
+
+    async function login() {
+      const res = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.getElementById('adminPass').value }) });
+      if (res.ok) { const d = await res.json(); localStorage.setItem('adminToken', d.token); showDashboard(); } else alert('Wrong password');
+    }
+    function logout() { localStorage.removeItem('adminToken'); location.reload(); }
+
+    async function showDashboard() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboardScreen').classList.remove('hidden');
+      
+      loadAnalytics();
+      
+      const res = await fetch('/api/admin/settings', { headers: getHeaders() });
+      const s = await res.json();
+      document.getElementById('upi_id').value = s.upi_id || '';
+      document.getElementById('upi_name').value = s.upi_name || '';
+      document.getElementById('banner_title').value = s.banner_title || '';
+      document.getElementById('banner_desc').value = s.banner_desc || '';
+      document.getElementById('banner_image').value = s.banner_image || '';
+
+      loadVideos(s.banner_video_id);
+      loadPendingPayments();
+      setInterval(() => { loadPendingPayments(); loadAnalytics(); }, 15000);
+    }
+
+    async function loadAnalytics() {
+      const res = await fetch('/api/admin/analytics', { headers: getHeaders() });
+      const d = await res.json();
+      document.getElementById('statUsers').innerText = d.totalUsers;
+      document.getElementById('statPremium').innerText = d.premiumUsers;
+      document.getElementById('statRevenue').innerText = '₹' + d.revenue;
+      document.getElementById('statVideos').innerText = d.totalVideos;
+    }
+
+    async function saveUPI() {
+      await fetch('/api/admin/settings', { method: 'POST', headers: { ...getHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ upi_id: document.getElementById('upi_id').value, upi_name: document.getElementById('upi_name').value }) });
+      alert('✅ UPI Updated!');
+    }
+
+    async function saveBanner() {
+      await fetch('/api/admin/settings', { method: 'POST', headers: { ...getHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({
+          banner_title: document.getElementById('banner_title').value,
+          banner_desc: document.getElementById('banner_desc').value,
+          banner_image: document.getElementById('banner_image').value,
+          banner_video_id: document.getElementById('banner_video_id').value
+      })});
+      alert('✅ Banner Updated!');
+    }
+
+    async function loadPendingPayments() {
+      const res = await fetch('/api/admin/payments', { headers: getHeaders() });
+      const payments = await res.json();
+      const pending = payments.filter(p => p.status === 'pending');
+      const div = document.getElementById('pendingPayments');
+      if(!pending.length) { div.innerHTML = 'No pending requests.'; return; }
+      div.innerHTML = pending.map(p => `
+        <div class="req-item">
+          <div><b>${p.user_name}</b><br/>Amt: ₹${p.amount / 100} | UTR: ${p.utr}</div>
+          <div style="display:flex; gap: 5px;">
+            <button class="btn-small btn-success" onclick="approve(${p.id})">✅</button>
+            <button class="btn-small btn-danger" onclick="reject(${p.id})">❌</button>
+          </div>
+        </div>`).join('');
+    }
+
+    async function approve(id) {
+      await fetch('/api/admin/payments/approve', { method: 'POST', headers: { ...getHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId: id }) });
+      loadPendingPayments(); loadAnalytics();
+    }
+    async function reject(id) {
+      await fetch('/api/admin/payments/reject', { method: 'POST', headers: { ...getHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId: id }) });
+      loadPendingPayments();
+    }
+
+    async function uploadVideo() {
+      const btn = document.getElementById('uploadBtn');
+      const msg = document.getElementById('uploadMsg');
+      const fd = new FormData();
+      fd.append('title', document.getElementById('title').value);
+      fd.append('tags', document.getElementById('tags').value);
+      fd.append('category', document.getElementById('category').value);
+      fd.append('isFree', document.getElementById('isFree').value);
+      if(document.getElementById('thumbnail').files[0]) fd.append('thumbnail', document.getElementById('thumbnail').files[0]);
+      if(document.getElementById('video').files[0]) fd.append('video', document.getElementById('video').files[0]);
+
+      btn.disabled = true; btn.textContent = 'Uploading...'; msg.textContent = '';
+      await fetch('/api/admin/upload', { method: 'POST', headers: getHeaders(), body: fd });
+      msg.textContent = '✅ Upload ho gaya! Background mein convert ho raha hai.';
+      document.getElementById('video').value = ''; document.getElementById('title').value = ''; document.getElementById('tags').value = '';
+      btn.disabled = false; btn.textContent = 'Upload Video';
+      loadVideos(); loadAnalytics();
+    }
+
+    async function loadVideos(selectedId = null) {
+      const res = await fetch('/api/admin/videos', { headers: getHeaders() });
+      const videos = await res.json();
+      document.getElementById('videoList').innerHTML = videos.map(v => `
+        <div class="req-item">
+          <div><b>${v.title || 'Untitled'}</b><br/><span style="font-size:11px; color:#888;">${v.category} • ${v.is_free ? 'Free' : 'Premium'}</span></div>
+          <button class="btn-small btn-danger" onclick="delVid('${v.id}')">Delete</button>
+        </div>`).join('');
+      
+      const select = document.getElementById('banner_video_id');
+      select.innerHTML = '<option value="">-- Select Video --</option>' + videos.map(v => `<option value="${v.id}">${v.title || 'Untitled'}</option>`).join('');
+      if(selectedId) select.value = selectedId;
+    }
+
+    async function delVid(id) {
+      if (confirm('Delete?')) { await fetch('/api/admin/video/' + id, { method: 'DELETE', headers: getHeaders() }); loadVideos(); loadAnalytics(); }
+    }
+  </script>
+</body>
+</html>
