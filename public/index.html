@@ -143,5 +143,34 @@
     let t; document.getElementById('search').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => loadVideos(e.target.value), 400); });
     renderCategories(); loadHero(); loadVideos(); refreshUser();
   </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    if (searchInput) {
+        searchInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                const q = searchInput.value.trim();
+                if (q) window.location.href = "/search.html?q=" + encodeURIComponent(q);
+            }
+        });
+    }
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("search");
+    if (searchInput) {
+        searchInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                const q = searchInput.value.trim();
+                if (q) window.location.href = "/search.html?q=" + encodeURIComponent(q);
+            }
+        });
+    }
+});
+</script>
 </body>
+
+
 </html>
