@@ -7,27 +7,16 @@
   <link rel="stylesheet" href="/style.css?v=37" />
 </head>
 <body>
+  
   <header>
     <div class="header-top">
       <div class="logo" onclick="location.href='/'">Velvet<span>Play</span></div>
       <input class="search" id="search" placeholder="Search movies, tags..." />
       <button class="user-btn login-state" id="userBtn" onclick="userClick()">Login</button>
     </div>
-      <input class="search" id="search" placeholder="Search movies, tags..." />
-
-          <div style="padding: 10px; border-bottom: 1px solid #333; font-weight: bold; display: flex; justify-content: space-between;">
-            <span>Notifications</span>
-            <span onclick="markAllRead()" style="font-size: 12px; color: #3b82f6; cursor: pointer;">Mark all read</span>
-          </div>
-          <div id="notifList" style="max-height: 300px; overflow-y: auto;">
-            <div style="padding: 15px; text-align: center; color: #888;">Loading...</div>
-          </div>
-        </div>
-      </div>
-      <button class="user-btn login-state" id="userBtn" onclick="userClick()">Login</button>
-    </div>
     <div class="categories" id="categories"></div>
   </header>
+
 
   <div id="homeBannerArea">
     <div class="premium-promo" onclick="location.href='/subscription.html'">
@@ -185,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
   <button onclick="toggleNotifications()" style="background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; position: relative;">
-    🔔
+    
     <span id="notifBadge" style="display: none; position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 10px; padding: 2px 5px; border-radius: 50%; font-weight: bold;">0</span>
   </button>
   <div id="notifDropdown" style="display: none; position: absolute; right: 0; top: 35px; width: 300px; background: #1e1e1e; border: 1px solid #333; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); overflow: hidden; color: white;">
