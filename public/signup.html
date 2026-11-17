@@ -5,29 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign Up — VelvetPlay</title>
   <link rel="stylesheet" href="/style.css" />
+  <style>
+    .step { display: none; }
+    .step.active { display: block; }
+    .otp-inputs { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+    .otp-inputs input { width: 40px; height: 50px; text-align: center; font-size: 24px; padding: 0; border-radius: 8px; border: 1px solid #333; background: #1F2937; color: #fff; }
+  </style>
 </head>
 <body class="auth-body">
   <div class="auth-card">
     <div class="auth-logo">Velvet<span>Play</span></div>
-    <h2>Create Account</h2>
-    <p class="auth-sub">Get 7 Days Free Premium with a Referral Code!</p>
+    
+    <!-- STEP 1: Details -->
+    <div id="step1" class="step active">
+      <h2>Create Account</h2>
+      <p class="auth-sub">Step 1: Enter your details</p>
+      <form id="signupForm1">
+        <label>Naam</label>
+        <input type="text" id="name" placeholder="Aapka naam" required />
+        <label>Email</label>
+        <input type="email" id="email" placeholder="you@email.com" required />
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Kam se kam 6 characters" required minlength="6" />
+        <button type="button" onclick="sendOTP()" id="sendOtpBtn">Send OTP</button>
+      </form>
+      <p id="error1" class="auth-error"></p>
+    </div>
 
-    <form id="signupForm">
-      <label>Naam</label>
-      <input type="text" id="name" placeholder="Aapka naam" required />
-      <label>Email</label>
-      <input type="email" id="email" placeholder="you@email.com" required />
-      <label>Password</label>
-      <input type="password" id="password" placeholder="Kam se kam 6 characters" required minlength="6" />
-      
-      <!-- Referral Input -->
-      <label>Referral Code (Optional)</label>
-      <input type="text" id="refCode" placeholder="e.g. ZAYN1234" style="text-transform: uppercase;" />
-      
-      <button type="submit" id="submitBtn">Sign Up</button>
-    </form>
-
-    <p id="error" class="auth-error"></p>
+    <!-- STEP 2: OTP Verification -->
+    <div id="step2" class="step">
+      <h2>Verify Email</h2>
+      <p class="auth-sub">Enter the 6-digit code sent to <br/><b id="displayEmail"></b></p>
+      <div class="otp-inputs">
+        <input type="text" maxlength="1" oninput="moveFocus(this, 1)" id="otp1" />
+        <input type="text" maxlength="1" oninput="moveFocus(this, 2)" id="otp2" />
+        <input type="text" maxlength="1" oninput="moveFocus(this, 3)" id="otp3" />
+        <input type="text" maxlength="1" oninput="moveFocus(this, 4)" id="otp4" />
+        <input type="text" maxlength="1" oninput="moveFocus(this, 5)" id="otp5" />
+        <input type="text" maxlength="1" oninput="moveFocus(this, 6)" id="otp6" />
+      </div>
+      <button onclick="verifyOTP()" id="verifyBtn">Verify & Create Account</button>
+      <p id="error2" class="auth-error"></p>
+    </div>
 
     <p class="auth-footer">
       Pehle se account hai? <a href="/login.html">Login karo</a>
@@ -36,31 +55,75 @@
 
   <script src="/auth.js"></script>
   <script>
-    document.getElementById('signupForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      const err = document.getElementById('error');
+    let userData = {};
+
+    async function sendOTP() {
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const err = document.getElementById('error1');
+      const btn = document.getElementById('sendOtpBtn');
+
+      if (!name || !email || !password) { err.textContent = 'Saari fields bharein!'; return; }
+
+      btn.disabled = true; btn.textContent = 'Sending...';
       err.textContent = '';
-      btn.disabled = true; btn.textContent = 'Creating...';
 
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: document.getElementById('name').value,
-          email: document.getElementById('email').value,
-          password: document.getElementById('password').value,
-          refCode: document.getElementById('refCode').value
-        })
-      });
-      const data = await res.json();
-      btn.disabled = false; btn.textContent = 'Sign Up';
+      // TODO for Backend: Replace this with actual /api/auth/send-otp route
+      try {
+        // MOCK API CALL
+        // const res = await fetch('/api/auth/send-otp', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+        
+        setTimeout(() => {
+          userData = { name, email, password };
+          document.getElementById('displayEmail').innerText = email;
+          document.getElementById('step1').classList.remove('active');
+          document.getElementById('step2').classList.add('active');
+          document.getElementById('otp1').focus();
+          btn.disabled = false; btn.textContent = 'Send OTP';
+        }, 1000);
+      } catch(e) { err.textContent = 'Error sending OTP'; btn.disabled = false; btn.textContent = 'Send OTP'; }
+    }
 
-      if (!res.ok) { err.textContent = data.error || 'Signup fail'; return; }
-      Auth.setToken(data.token);
-      Auth.setUser(data.user);
-      location.href = '/';
-    });
+    function moveFocus(current, nextId) {
+      if (current.value.length === 1 && nextId <= 6) {
+        document.getElementById('otp' + nextId).focus();
+      }
+    }
+
+    async function verifyOTP() {
+      const otp = Array.from({length: 6}, (_, i) => document.getElementById('otp' + (i+1)).value).join('');
+      if (otp.length !== 6) return alert('6-digit code daalein');
+      
+      const btn = document.getElementById('verifyBtn');
+      btn.disabled = true; btn.textContent = 'Verifying...';
+
+      // TODO for Backend: Verify OTP and then call /api/auth/signup
+      try {
+        // MOCK API CALL
+        // const verifyRes = await fetch('/api/auth/verify-otp', {...});
+        
+        setTimeout(async () => {
+          // Now create account (assuming backend is ready)
+          const res = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...userData, otp })
+          });
+          const data = await res.json();
+          
+          btn.disabled = false; btn.textContent = 'Verify & Create Account';
+
+          if (!res.ok) { document.getElementById('error2').textContent = data.error || 'Signup fail'; return; }
+          Auth.setToken(data.token);
+          Auth.setUser(data.user);
+          location.href = '/';
+        }, 1000);
+      } catch(e) { 
+        document.getElementById('error2').textContent = 'Network Error'; 
+        btn.disabled = false; btn.textContent = 'Verify & Create Account';
+      }
+    }
   </script>
 </body>
 </html>
