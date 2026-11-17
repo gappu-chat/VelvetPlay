@@ -156,6 +156,29 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
+
+// ---------- NOTIFICATIONS API ----------
+app.get('/api/notifications', auth, async (req, res) => {
+  try {
+    const notifications = await db.prepare('SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20').all(req.user.id);
+    res.json(notifications);
+  } catch(e) { res.status(500).json({ error: 'Server error' }); }
+});
+
+app.get('/api/notifications/unread-count', auth, async (req, res) => {
+  try {
+    const result = await db.prepare('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0').get(req.user.id);
+    res.json({ count: result.count });
+  } catch(e) { res.json({ count: 0 }); }
+});
+
+app.post('/api/notifications/read', auth, async (req, res) => {
+  try {
+    await db.prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ?').run(req.user.id);
+    res.json({ success: true });
+  } catch(e) { res.status(500).json({ error: 'Server error' }); }
+});
+
 app.post('/api/auth/login', async (req, res) => {
   const user = await db.prepare('SELECT * FROM users WHERE email = ?').get(req.body.email.toLowerCase());
   if (!user || !(await bcrypt.compare(req.body.password, user.password_hash))) return res.status(400).json({ error: 'Invalid credentials' });
@@ -194,6 +217,8 @@ app.get('/api/auth/me', auth, async (req, res) => {
 app.put('/api/auth/profile', auth, async (req, res) => {
   try {
     await db.prepare('UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?').run(req.body.name, req.body.email, req.body.phone, req.user.id);
+    // Notification create karo
+    await db.prepare('INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)').run(req.user.id, 'Profile Updated', 'Your profile details have been updated successfully.');
     res.json({ success: true });
   } catch(e) { res.status(400).json({ error: 'Email already in use' }); }
 });
