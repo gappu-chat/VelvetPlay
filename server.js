@@ -20,8 +20,8 @@ process.on('unhandledRejection', (reason) => console.error('\n⚠️ REJECTION:'
 
 
 const turso = createClient({
-  url: process.env.TURSO_DATABASE_URL,
-  authToken: process.env.TURSO_AUTH_TOKEN,
+  url: (process.env.TURSO_DATABASE_URL || "").trim(),
+  authToken: (process.env.TURSO_AUTH_TOKEN || "").trim(),
 });
 
 const db = {
