@@ -4,26 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>VelvetPlay — Premium Videos</title>
-  <link rel="stylesheet" href="/style.css?v=51" />
+  <link rel="stylesheet" href="/style.css?v=52" />
   <style>
-    /* Header Fix: Spacing and sizing */
-    .header-top { display: flex; align-items: center; gap: 6px; padding: 0 4px; }
-    .logo { font-size: 20px; margin-right: auto; } /* Logo pushes rest to right */
-    .search { flex: 1; max-width: 150px; padding: 8px 12px; font-size: 13px; }
+    /* Perfect Header Layout */
+    .header-top { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
+    .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; cursor: pointer; margin-right: 4px; }
+    .search { flex: 1; min-width: 80px; padding: 10px 14px; font-size: 14px; margin: 0 4px; background: #1F2937; border: 1px solid #2A3441; border-radius: 8px; color: #fff; outline: none; }
+    .search:focus { border-color: #3B82F6; }
     
     /* Bell Icon Styling */
-    .bell-container { position: relative; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: #1F2937; cursor: pointer; flex-shrink: 0; }
-    .bell-container svg { width: 18px; height: 18px; fill: #fff; }
-    .bell-badge { position: absolute; top: 0px; right: 0px; background: #EF4444; color: #fff; font-size: 9px; font-weight: bold; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #0B0F19; }
+    .bell-container { position: relative; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: #1F2937; cursor: pointer; flex-shrink: 0; }
+    .bell-container svg { width: 20px; height: 20px; fill: #fff; }
+    .bell-badge { position: absolute; top: -2px; right: -2px; background: #EF4444; color: #fff; font-size: 10px; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #0B0F19; }
     
-    .user-btn { width: 34px; height: 34px; font-size: 13px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .user-btn { width: 36px; height: 36px; font-size: 14px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #3B82F6; border-radius: 50%; color: #fff; font-weight: bold; border: 0; }
+    .user-btn.login-state { background: #3B82F6; border-radius: 8px; width: auto; padding: 0 12px; }
   </style>
 </head>
 <body>
   <header>
     <div class="header-top">
       <div class="logo" onclick="location.href='/'">Velvet<span>Play</span></div>
-      <input class="search" id="search" placeholder="Search..." />
+      
+      <!-- SEARCH BAR WAPAS BADA -->
+      <input class="search" id="search" placeholder="Search movies, tags..." />
       
       <!-- NOTIFICATION BELL -->
       <div class="bell-container" onclick="location.href='/notifications.html'">
@@ -41,7 +45,9 @@
       <div><h3>👑 Velvet Premium</h3><p>Unlock all content at just ₹500/month</p></div>
       <button>View Plans</button>
     </div>
-    <div class="hero" id="hero"></div>
+    <div class="hero" id="hero" style="min-height: 200px; background: #151B2B; display: flex; align-items: center; justify-content: center;">
+      <span style="color: #9CA3AF;">Loading Banner...</span>
+    </div>
   </div>
   
   <div id="continueSection" style="display:none;">
@@ -50,7 +56,9 @@
   </div>
 
   <div class="section-title" id="grid-title">Latest & Trending</div>
-  <div class="grid" id="grid"></div>
+  <div class="grid" id="grid">
+    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #9CA3AF;">Loading videos...</div>
+  </div>
 
   <script src="/auth.js"></script>
   <script>
@@ -82,16 +90,15 @@
         if (s.banner_image && s.banner_image.trim() !== '') bgImage = `url('${s.banner_image}'), linear-gradient(135deg, #1E1B4B, #312E81)`;
         
         document.getElementById('hero').innerHTML = `
-          <div style="width:100%; height:100%; background-image: ${bgImage}; background-size: cover; background-position: center;"></div>
-          <div class="hero-overlay">
+          <div style="width:100%; height:100%; background-image: ${bgImage}; background-size: cover; background-position: center; position: absolute; inset: 0;"></div>
+          <div class="hero-overlay" style="position: relative; z-index: 2;">
             <div class="hero-badge">FEATURED MOVIE</div>
             <h2>${s.banner_title || 'Featured Video'}</h2>
             <p>${s.banner_desc || 'Watch exclusive content.'}</p>
             <button class="hero-btn" onclick="buy('${s.banner_video_id}')">▶ Watch Now</button>
           </div>`;
       } catch(e) { 
-        console.log("Hero Error", e);
-        document.getElementById('hero').innerHTML = `<div style="padding: 20px; color: #fff;">Failed to load featured video.</div>`;
+        document.getElementById('hero').innerHTML = `<span style="color: #EF4444;">Failed to load banner</span>`;
       }
     }
 
@@ -124,6 +131,9 @@
     }
 
     async function loadVideos(q = '') {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #9CA3AF;">Fetching videos...</div>`;
+
       if (q.trim() !== '') {
         document.getElementById('homeBannerArea').style.display = 'none';
         document.getElementById('continueSection').style.display = 'none';
@@ -137,20 +147,23 @@
       }
 
       try {
+        // Direct API Call
         const res = await fetch(`/api/videos?category=${currentCategory}${q ? '&q=' + encodeURIComponent(q) : ''}`);
+        
+        if(!res.ok) throw new Error("Server error: " + res.status);
+        
         const data = await res.json();
         allVideos = data.videos || [];
         
-        const grid = document.getElementById('grid');
         if (!allVideos.length) { 
-          grid.innerHTML = `<div class="empty"><div class="empty-icon">🎬</div><div>Koi video nahi mili.</div></div>`; 
+          grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #9CA3AF;">No videos found.</div>`; 
           return; 
         }
 
         grid.innerHTML = allVideos.map(v => `
           <div class="card" onclick="buy('${v.id}')">
             <div style="position:relative">
-              <img class="card-thumb" src="${v.thumbnail}" loading="lazy"/>
+              <img class="card-thumb" src="${v.thumbnail}" loading="lazy" onerror="this.src='https://picsum.photos/400/300'"/>
               <div class="card-overlay">${v.is_free ? '<span class="badge free">FREE</span>' : '<span class="badge premium">PREMIUM</span>'}</div>
               <span class="duration-badge">10:00</span>
             </div>
@@ -160,8 +173,8 @@
             </div>
           </div>`).join('');
       } catch(e) { 
-        console.log("Videos Error", e); 
-        document.getElementById('grid').innerHTML = `<div style="padding:20px; color:#fff;">Failed to load videos. Please check connection.</div>`;
+        console.error(e);
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #EF4444;">Error loading videos. Server issue.</div>`;
       }
     }
 
@@ -189,6 +202,7 @@
       t = setTimeout(() => loadVideos(e.target.value), 400); 
     });
     
+    // Start
     renderCategories(); loadHero(); loadVideos(); refreshUser();
   </script>
 </body>
