@@ -21,7 +21,7 @@ header {
   border-bottom: 1px solid var(--border);
   padding: 12px 16px;
 }
-.header-top { display: flex; align-items: center; gap: 12px; }
+.header-top { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
 .logo { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; cursor: pointer; }
 .logo span { color: var(--accent); }
 .search {

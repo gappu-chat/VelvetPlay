@@ -4,21 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>VelvetPlay — Premium Videos</title>
-  <link rel="stylesheet" href="/style.css?v=50" />
+  <link rel="stylesheet" href="/style.css?v=51" />
   <style>
+    /* Header Fix: Spacing and sizing */
+    .header-top { display: flex; align-items: center; gap: 6px; padding: 0 4px; }
+    .logo { font-size: 20px; margin-right: auto; } /* Logo pushes rest to right */
+    .search { flex: 1; max-width: 150px; padding: 8px 12px; font-size: 13px; }
+    
     /* Bell Icon Styling */
-    .bell-container { position: relative; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--surface-2, #1F2937); cursor: pointer; margin-right: 8px; flex-shrink: 0; }
-    .bell-container svg { width: 20px; height: 20px; fill: #fff; }
-    .bell-badge { position: absolute; top: -2px; right: -2px; background: #EF4444; color: #fff; font-size: 10px; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #0B0F19; }
+    .bell-container { position: relative; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: #1F2937; cursor: pointer; flex-shrink: 0; }
+    .bell-container svg { width: 18px; height: 18px; fill: #fff; }
+    .bell-badge { position: absolute; top: 0px; right: 0px; background: #EF4444; color: #fff; font-size: 9px; font-weight: bold; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #0B0F19; }
+    
+    .user-btn { width: 34px; height: 34px; font-size: 13px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   </style>
 </head>
 <body>
   <header>
     <div class="header-top">
       <div class="logo" onclick="location.href='/'">Velvet<span>Play</span></div>
-      <input class="search" id="search" placeholder="Search movies, tags..." />
+      <input class="search" id="search" placeholder="Search..." />
       
-      <!-- NOTIFICATION BELL (Added cleanly) -->
+      <!-- NOTIFICATION BELL -->
       <div class="bell-container" onclick="location.href='/notifications.html'">
         <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
         <span class="bell-badge" id="notifBadge" style="display:none;">0</span>
@@ -51,35 +58,29 @@
     const categories = ['All', 'Trending', 'New', 'Premium', 'Animation'];
 
     async function refreshUser() {
-      me = await Auth.fetchMe();
-      const btn = document.getElementById('userBtn');
-      if (me) { 
-        btn.textContent = me.name.charAt(0).toUpperCase(); btn.classList.remove('login-state'); 
-        loadContinueWatching();
-        checkNotifications(); // Check for new notifications
-      } else { btn.textContent = 'Login'; btn.classList.add('login-state'); }
+      try {
+        me = await Auth.fetchMe();
+        const btn = document.getElementById('userBtn');
+        if (me) { 
+          btn.textContent = me.name.charAt(0).toUpperCase(); 
+          btn.classList.remove('login-state'); 
+          loadContinueWatching();
+        } else { 
+          btn.textContent = 'Login'; 
+          btn.classList.add('login-state'); 
+        }
+      } catch(e) { console.log("Auth Error", e); }
     }
     function userClick() { location.href = me ? '/account.html' : '/login.html'; }
-
-    async function checkNotifications() {
-      try {
-        const res = await Auth.authFetch('/api/notifications');
-        if(res.ok) {
-          const data = await res.json();
-          const unread = data.filter(n => !n.is_read).length;
-          const badge = document.getElementById('notifBadge');
-          if(unread > 0) { badge.innerText = unread > 9 ? '9+' : unread; badge.style.display = 'flex'; }
-          else { badge.style.display = 'none'; }
-        }
-      } catch(e) {}
-    }
 
     async function loadHero() {
       try {
         const res = await fetch('/api/settings');
         const s = await res.json();
+        
         let bgImage = 'linear-gradient(135deg, #1E1B4B, #312E81)';
         if (s.banner_image && s.banner_image.trim() !== '') bgImage = `url('${s.banner_image}'), linear-gradient(135deg, #1E1B4B, #312E81)`;
+        
         document.getElementById('hero').innerHTML = `
           <div style="width:100%; height:100%; background-image: ${bgImage}; background-size: cover; background-position: center;"></div>
           <div class="hero-overlay">
@@ -88,32 +89,38 @@
             <p>${s.banner_desc || 'Watch exclusive content.'}</p>
             <button class="hero-btn" onclick="buy('${s.banner_video_id}')">▶ Watch Now</button>
           </div>`;
-      } catch(e) { document.getElementById('hero').style.display = 'none'; }
+      } catch(e) { 
+        console.log("Hero Error", e);
+        document.getElementById('hero').innerHTML = `<div style="padding: 20px; color: #fff;">Failed to load featured video.</div>`;
+      }
     }
 
     async function loadContinueWatching() {
       if (!Auth.getToken()) return;
-      const res = await Auth.authFetch('/api/history/continue');
-      const items = await res.json();
-      if (!items.length) return;
-      
-      document.getElementById('continueSection').style.display = 'block';
-      document.getElementById('continueGrid').innerHTML = items.map(v => {
-        const percent = Math.round((v.progress / v.duration) * 100);
-        return `
-        <div class="card" onclick="buy('${v.id}')">
-          <div style="position:relative">
-            <img class="card-thumb" src="${v.thumbnail}" loading="lazy"/>
-            <div style="position:absolute; bottom:0; left:0; width:100%; height:4px; background:#333;">
-              <div style="width:${percent}%; height:100%; background:#3B82F6;"></div>
+      try {
+        const res = await Auth.authFetch('/api/history/continue');
+        if(!res.ok) return;
+        const items = await res.json();
+        if (!items.length) return;
+        
+        document.getElementById('continueSection').style.display = 'block';
+        document.getElementById('continueGrid').innerHTML = items.map(v => {
+          const percent = Math.round((v.progress / v.duration) * 100);
+          return `
+          <div class="card" onclick="buy('${v.id}')">
+            <div style="position:relative">
+              <img class="card-thumb" src="${v.thumbnail}" loading="lazy"/>
+              <div style="position:absolute; bottom:0; left:0; width:100%; height:4px; background:#333;">
+                <div style="width:${percent}%; height:100%; background:#3B82F6;"></div>
+              </div>
             </div>
-          </div>
-          <div class="card-info">
-            <div class="card-title">${v.title}</div>
-            <div class="card-views" style="font-size:11px; color:#3B82F6;">${percent}% watched</div>
-          </div>
-        </div>`;
-      }).join('');
+            <div class="card-info">
+              <div class="card-title">${v.title}</div>
+              <div class="card-views" style="font-size:11px; color:#3B82F6;">${percent}% watched</div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch(e) { console.log(e); }
     }
 
     async function loadVideos(q = '') {
@@ -129,25 +136,33 @@
         if(me) loadContinueWatching();
       }
 
-      const res = await fetch(`/api/videos?category=${currentCategory}${q ? '&q=' + encodeURIComponent(q) : ''}`);
-      const data = await res.json();
-      allVideos = data.videos || [];
-      
-      const grid = document.getElementById('grid');
-      if (!allVideos.length) { grid.innerHTML = `<div class="empty"><div>Koi video nahi mili.</div></div>`; return; }
+      try {
+        const res = await fetch(`/api/videos?category=${currentCategory}${q ? '&q=' + encodeURIComponent(q) : ''}`);
+        const data = await res.json();
+        allVideos = data.videos || [];
+        
+        const grid = document.getElementById('grid');
+        if (!allVideos.length) { 
+          grid.innerHTML = `<div class="empty"><div class="empty-icon">🎬</div><div>Koi video nahi mili.</div></div>`; 
+          return; 
+        }
 
-      grid.innerHTML = allVideos.map(v => `
-        <div class="card" onclick="buy('${v.id}')">
-          <div style="position:relative">
-            <img class="card-thumb" src="${v.thumbnail}" loading="lazy"/>
-            <div class="card-overlay">${v.is_free ? '<span class="badge free">FREE</span>' : '<span class="badge premium">PREMIUM</span>'}</div>
-            <span class="duration-badge">10:00</span>
-          </div>
-          <div class="card-info">
-            <div class="card-title">${v.title || 'Untitled'}</div>
-            <div class="card-views">👁️ ${v.views || 0} views</div>
-          </div>
-        </div>`).join('');
+        grid.innerHTML = allVideos.map(v => `
+          <div class="card" onclick="buy('${v.id}')">
+            <div style="position:relative">
+              <img class="card-thumb" src="${v.thumbnail}" loading="lazy"/>
+              <div class="card-overlay">${v.is_free ? '<span class="badge free">FREE</span>' : '<span class="badge premium">PREMIUM</span>'}</div>
+              <span class="duration-badge">10:00</span>
+            </div>
+            <div class="card-info">
+              <div class="card-title">${v.title || 'Untitled'}</div>
+              <div class="card-views">👁️ ${v.views || 0} views</div>
+            </div>
+          </div>`).join('');
+      } catch(e) { 
+        console.log("Videos Error", e); 
+        document.getElementById('grid').innerHTML = `<div style="padding:20px; color:#fff;">Failed to load videos. Please check connection.</div>`;
+      }
     }
 
     function renderCategories() {
@@ -160,13 +175,20 @@
       if (!videoId || videoId === 'undefined') return alert('Video link missing.');
       if (!Auth.getToken()) return location.href = '/login.html';
       
-      const res = await Auth.authFetch('/api/create-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ videoId }) });
-      const order = await res.json();
-      if (order.hasAccess && order.token) return location.href = `/player.html?video=${videoId}&token=${order.token}`;
-      return location.href = '/subscription.html';
+      try {
+        const res = await Auth.authFetch('/api/create-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ videoId }) });
+        const order = await res.json();
+        if (order.hasAccess && order.token) return location.href = `/player.html?video=${videoId}&token=${order.token}`;
+        return location.href = '/subscription.html';
+      } catch(e) { alert('Network error. Please try again.'); }
     }
 
-    let t; document.getElementById('search').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => loadVideos(e.target.value), 400); });
+    let t; 
+    document.getElementById('search').addEventListener('input', (e) => { 
+      clearTimeout(t); 
+      t = setTimeout(() => loadVideos(e.target.value), 400); 
+    });
+    
     renderCategories(); loadHero(); loadVideos(); refreshUser();
   </script>
 </body>
