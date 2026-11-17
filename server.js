@@ -64,8 +64,8 @@ try { db.exec('ALTER TABLE comments ADD COLUMN likes INTEGER DEFAULT 0'); } catc
 try { db.exec('ALTER TABLE comments ADD COLUMN parent_id INTEGER'); } catch(e) {}
 try { db.exec('ALTER TABLE comments ADD COLUMN username TEXT'); } catch(e) {}
 
-await db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('upi_id', 'vp061038-2@okhdfcbank');
-await db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('upi_name', 'VelvetPlay');
+db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('upi_id', 'vp061038-2@okhdfcbank');
+db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('upi_name', 'VelvetPlay');
 
 const uploadDir = path.join(__dirname, 'temp_uploads');
 const mediaDir = path.join(__dirname, 'media');
