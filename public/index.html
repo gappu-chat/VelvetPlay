@@ -11,6 +11,9 @@
     <div class="header-top">
       <div class="logo" onclick="location.href='/'">Velvet<span>Play</span></div>
       <input class="search" id="search" placeholder="Search movies, tags..." />
+      <button class="user-btn login-state" id="userBtn" onclick="userClick()">Login</button>
+    </div>
+      <input class="search" id="search" placeholder="Search movies, tags..." />
 
           <div style="padding: 10px; border-bottom: 1px solid #333; font-weight: bold; display: flex; justify-content: space-between;">
             <span>Notifications</span>
@@ -196,66 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
   </div>
 </div>
 
-<script>
-async function fetchNotifications() {
-  const token = Auth.getToken();
-  if (!token) return;
-  
-  try {
-    const res = await fetch('/api/notifications', { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!res.ok) return;
-    const notifs = await res.json();
-    
-    const unreadRes = await fetch('/api/notifications/unread-count', { headers: { 'Authorization': 'Bearer ' + token } });
-    const unreadData = await unreadRes.json();
-    
-    const badge = document.getElementById('notifBadge');
-    if (unreadData.count > 0) {
-      badge.style.display = 'block';
-      badge.innerText = unreadData.count;
-    } else {
-      badge.style.display = 'none';
-    }
 
-    const list = document.getElementById('notifList');
-    if (notifs.length === 0) {
-      list.innerHTML = '<div style="padding: 15px; text-align: center; color: #888;">No notifications yet.</div>';
-    } else {
-      list.innerHTML = notifs.map(n => `
-        <div style="padding: 10px; border-bottom: 1px solid #222; background: ${n.is_read ? 'transparent' : '#2a2a2a'};">
-          <div style="font-weight: bold; font-size: 14px;">${n.title}</div>
-          <div style="font-size: 12px; color: #aaa; margin-top: 3px;">${n.message}</div>
-        </div>
-      `).join('');
-    }
-  } catch(e) { console.log(e); }
-}
-
-function toggleNotifications() {
-  const dropdown = document.getElementById('notifDropdown');
-  if (dropdown.style.display === 'none') {
-    dropdown.style.display = 'block';
-    fetchNotifications();
-  } else {
-    dropdown.style.display = 'none';
-  }
-}
-
-async function markAllRead() {
-  const token = Auth.getToken();
-  if (!token) return;
-  await fetch('/api/notifications/read', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
-  fetchNotifications();
-}
-
-// Page load hone par check karo
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(fetchNotifications, 1000);
-});
-
-// Har 30 second me check karo
-setInterval(fetchNotifications, 30000);
-</script>
 </body>
 
 
